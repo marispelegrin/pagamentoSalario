@@ -1,97 +1,97 @@
 pragma solidity 0.4.25;
 
-contract payrollSystem{
+contract pagamentoSalario{
     
-    address company;
+    address empresa;
     
-    struct employee {
-        bool active;
-        bool paid;
-        uint salary;
-        uint balance;
+    struct empregado {
+        bool ativo;
+        bool pago;
+        uint salario;
+        uint saldo;
     }
     
-    event Transfer(address indexed from, address indexed to,uint amount);
+    event Transfer(address indexed de, address indexed para,uint valor);
     
-    mapping(address => employee) employeeMapper; 
-    address[] employeeList;
+    mapping(address => empregado) identificarEmpregado; 
+    address[] listaEmpregados;
     
-    //constructor of the contract
-    function payrollSystem(){
-        company = msg.sender;
+    //construcao do contrato
+    function pagamentoSalario(){
+        empresa = msg.sender;
     }
     
-    //to allow transactions only through the company account
-    modifier onlyCompany(){
-       if(msg.sender != company){
+    //autoriza transacoes somente via conta da empresa
+    modifier somenteEmpresa(){
+       if(msg.sender != empresa){
            revert();
        }
         _;
     }
     
-    //to add an employee to the company's list of employees
-    function addEmployee(address newEmployee, uint salary) onlyCompany{
-        var _employee = employeeMapper[newEmployee];
-        _employee.active = true;
-        _employee.salary = salary;
-        _employee.balance = 0;
-        employeeList.push(newEmployee);
+    //para adicionar novo empregado a lista de empregados da empresa
+    function addEmployee(address novoEmpregado, uint salario) somenteEmpresa{
+        var _empregado = identificarEmpregado[novoEmpregado];
+        _empregado.ativo = true;
+        _empregado.salario = salario;
+        _empregado.saldo = 0;
+        listaEmpregados.push(novoEmpregado);
     }
     
-    //if at all the employee leaves the company, we can use this function to turn him inactive
-    function removeEmployee(address _address) onlyCompany{
-        employeeMapper[_address].active = false;
+    //se o empregado deixar a empresa, usar esta funcao para torna-lo inativo
+    function removerEmpregado(address _address) somenteEmpresa{
+        identificarEmpregado[_address].ativo = false;
     }
     
-    //this function can be used to give a raise in the salary of an employee
-    function updateSalary(address _address, uint newSalary) onlyCompany{
-        employeeMapper[_address].salary = newSalary;
+    //para aumentar o salario do empregado
+    function reajustaSalario(address _address, uint novoSalario) somenteEmpresa{
+        identificarEmpregado[_address].salario = novoSalario;
     }
     
-    function listOutEmployees() onlyCompany constant returns(address[]){
-        return employeeList;
+    function listarEmpregados() somenteEmpresa constant returns(address[]){
+        return listaEmpregados;
     }
     
-    //deposit the initial amount a company would start with. It can be updated as the investment grows
-    function depositInvestment() onlyCompany payable{
+    //deposita o valor inicial combinado com a empresa
+    function depositarSalario() somenteEmpresa payable{
      
     }
     
-    function totalSupply() onlyCompany constant returns(uint){
-       return this.balance;
+    function totalPago() somenteEmpresa constant returns(uint){
+       return this.saldo;
     }
     
-    //validate whether the employee is still working in the company
-    function isActive(address check) constant returns(bool){
-        return employeeMapper[check].active;
+    //validado se o empregado ainda trabalha na empresa
+    function estaAtivo(address check) constant returns(bool){
+        return identificarEmpregado[check].ativo;
     }
     
 
-    //this sends the salary to the employee account    
+    //envia o salario para a conta do empregado 
     function transfer(address _address) private{
        if(employeeMapper[_address].salary < this.balance){
            transferLog(_address);
-           employeeMapper[_address].paid = true;
-           employeeMapper[_address].balance += employeeMapper[_address].salary;
+           identificarEmpregado[_address].pago = true;
+           identificarEmpregado[_address].saldo += identificarEmpregado[_address].salario;
        }else{
-           employeeMapper[_address].paid = false;
+           identificarEmpregado[_address].pago = false;
        }
     }
     
     function transferLog(address _address) private{
-        Transfer(msg.sender,_address,employeeMapper[_address].salary);
+        Transfer(msg.sender,_address,identificarEmpregado[_address].salario);
     }
     
-    //first we check whether the employee is working in the company and then check for double spend
-    function sendSalary(address sendTo){
-        if(isActive(sendTo) && !employeeMapper[sendTo].paid){
-            transfer(sendTo);
+    //primeiro checar se o empregado esta ativo e entao checar para duplo envio
+    function enviaSalario(address enviaPara){
+        if(estaAtivo(enviaPara) && !identificarEmpregado[enviaPara].pago){
+            transfer(enviaPara);
         }
     } 
     
     
     function balanceOf(address empAd) public constant returns(uint){
-        return employeeMapper[empAd].balance;
+        return identificarEmpregado[empAd].saldo;
     }
     
 }
